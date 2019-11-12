@@ -102,7 +102,7 @@ maleweightm<-median(male$weight)
 
 femaleweightm<-median(female$weight)
 
-cd$weight<-ifelse(gender==1 & cd$weight<45,femaleweightm, ifelse(gender==1 & cd$weight>120,femaleweightm,ifelse(gender==2 & cd$weight<55,maleweightm,ifelse(gender==2 & cd$weight>120,maleweightm,cd$weight))))
+cd$weight<-ifelse(cd$gender==1 & cd$weight<45,femaleweightm, ifelse(cd$gender==1 & cd$weight>120,femaleweightm,ifelse(cd$gender==2 & cd$weight<55,maleweightm,ifelse(cd$gender==2 & cd$weight>120,maleweightm,cd$weight))))
 
 
 # Calculating BMI using weight and height. Potential predictor 
