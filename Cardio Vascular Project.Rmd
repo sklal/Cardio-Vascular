@@ -1,0 +1,251 @@
+---
+title: ""
+author: "Mishkin Khunger, Sanat Lal, Sharmin Kantharia, Vishal Pathak"
+date: "11/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r dataload}
+library(ggplot2)
+
+
+cd = read.csv("D:\\Data Science\\Cardio Vascular\\Cardio-Vascular\\cardio.csv")
+
+dim(cd)
+
+cd$age<- (cd$age/365)
+
+cd$age<- round(cd$age) 
+```
+
+```{r basicchecks}
+
+#Structure
+str(cd)
+
+#Summary
+summary(cd)
+
+# Anomalies found in height, weight, systolic (ap_hi) and diastolic (ap_lo)
+#Gender,cholestrol,gluc,smoke,alco,active,cardio are needed to be converted into categorical variable
+
+```
+
+
+```{r datawrangling, echo=FALSE}
+attach(cd)
+#Fixing the negative values and change them to their absolute values
+
+cd<-abs(cd) #negative systolic and diastolic value fixed 
+
+
+#Fixing systolic and diastolic
+
+#Systolic 
+
+#The scale in most sphygmomanometer ranges from 0 to 400 
+#Explanation for the below calculation
+# If the systolic/diastolic in the data is below 10 then it is possibly an error and would be 
+# If the systolic/diastolic in the data lies between 10 and 40 (most likely a typing error), then the data will be multiplied by 10
+# If the systolic/diastolic in the data lies between 400 and 10000 (Out of range and possible typing errors), then the data will be divided by 100
+# If the systolic/diastolic in the data is greater than 10000 (Out of range and possible typing errors), then the data will be divided by 100
+
+
+
+
+correction<-function(cr){ifelse(cr<10,NA,
+                        ifelse(cr>=10 & cr<40,cr*10,        
+                        ifelse(cr>400 & cr<4000,cr/10,
+                        ifelse(cr>4000 & cr<10000,cr/100,       
+                        ifelse(cr>=10000,cr/100,cr)))))}
+
+cd$ap_hi<- correction(cd$ap_hi)
+
+cd$ap_lo<- correction(cd$ap_lo)
+
+
+
+
+# Systolic cannot be lower than Diastolic, therefore we will swap the values where such is the case in the dataset
+
+temp_min = pmin(cd$ap_hi, cd$ap_lo)
+cd$ap_hi = pmax(cd$ap_hi, cd$ap_lo)
+cd$ap_lo = temp_min
+
+
+
+
+
+# fixing height - assuming the height of the population in females is not less than 150 cm(approx. 4 feet 11 inches) and not less than 155 cm(5 ft 1 inches) in males . Replacing the value below these parameters by their respective medians 
+
+female<-subset(cd,gender==1,select=c(gender,height,weight))
+male<-subset(cd,gender==2,select=c(gender,height,weight))
+
+maleheightm<-median(male$height)
+
+femaleheightm<-median(female$height)
+
+cd$height<-ifelse(gender==1 & cd$height<150,femaleheightm, ifelse(gender==2 & cd$height<155,maleheightm,cd$height) )
+
+cd$height
+
+
+
+#fixing weight - assuming the weight of the population in females is not less than 45 kgs and not less than 55kgs  in males and both are not greater than 120Kgs. Replacing the value below these parameters by their respective means 
+
+maleweightm<-median(male$weight)
+
+femaleweightm<-median(female$weight)
+
+cd$weight<-ifelse(gender==1 & cd$weight<45,femaleweightm, ifelse(gender==1 & cd$weight>120,femaleweightm,ifelse(gender==2 & cd$weight<55,maleweightm,ifelse(gender==2 & cd$weight>120,maleweightm,cd$weight))))
+
+
+# Calculating BMI using weight and height. Potential predictor 
+
+cd$bmi<- cd$weight/(cd$height*cd$height)*10000 # Weight in kgs and height in cms
+
+cd$bmi
+
+
+
+# Check for Null Values
+sum(is.na(cd))
+
+#The abnormally low values in the case of systolic and and diastolic are converted to NA. As they are very low in number (32) and contribute to only 0.04% of the data, they can be dropped.  
+
+cd<-na.omit(cd) 
+
+# dropping id column 
+
+cd$id<- NULL
+
+
+# Converting data types
+
+#Gender
+cd$gender<-as.factor(cd$gender)
+#Cholestrol
+cd$cholesterol<-as.factor(cd$cholesterol)
+#Glucose
+cd$gluc<-as.factor(cd$gluc)
+#Smoke
+cd$smoke<- as.factor(cd$smoke)
+#Alcohol
+cd$alco<- as.factor(cd$alco)
+#Active
+cd$active<- as.factor(cd$active)
+#Cardio
+cd$cardio<- as.factor(cd$cardio)
+
+
+#write.csv(cd,"D:\\Data Science\\Cardio Vascular\\test.csv", row.names = TRUE)
+summary(cd)
+
+
+```
+
+```{r vis, echo = FALSE}
+#Visual 
+
+#Mishkin Sharmin ...
+
+```
+
+
+
+```{r datasplit, echo=FALSE}
+require(caTools) #install caTools
+set.seed(123)
+sample = sample.split(cd,SplitRatio = 0.70)
+train_cd =subset(cd,sample ==TRUE)
+test_cd =subset(cd, sample==FALSE)
+
+
+#write.csv(cd,"D:\\Data Science\\Cardio Vascular\\train_cd.csv", row.names = TRUE)
+#write.csv(cd,"D:\\Data Science\\Cardio Vascular\\test_cd.csv", row.names = TRUE)
+```
+
+
+```{r stat, echo = FALSE}
+
+#Vishal - Relationship among predictors
+
+
+
+
+# Relationship with the target variable
+
+#Statistical Significance between Height & Cardio Vascular Disease risk 
+ttestresage = t.test(train_cd$age~train_cd$cardio)
+ttestresage
+
+#Strong Predictor
+
+#Statistical Significance between Height & Cardio Vascular Disease risk 
+ttestresheight = t.test(train_cd$height~train_cd$cardio)
+ttestresheight
+
+#Comparitively weak predictor
+
+#Statistical Significance between Weight & Cardio Vascular Disease risk 
+ttestresweight = t.test(train_cd$weight~train_cd$cardio)
+ttestresweight
+
+#Strong predictor
+
+#Statistical Significance between BMI & Cardio Vascular Disease risk 
+ttestresbmi = t.test(train_cd$bmi~train_cd$cardio)
+ttestresbmi
+
+#Strong predictor
+
+#Statistical Significance between Systolic & Cardio Vascular Disease 
+ttestressys = t.test(train_cd$ap_hi~train_cd$cardio)
+ttestressys 
+
+#Strong Predictor
+
+#Statistical Significance between Diastolic & Cardio Vascular Disease 
+ttestresdia = t.test(train_cd$ap_lo~train_cd$cardio)
+ttestresdia 
+
+#Strong Predictor
+
+#Statistical Significance between Cholestrol & Cardio Vascular Disease 
+chisqreschol = chisq.test(train_cd$cholesterol,train_cd$cardio)
+chisqreschol 
+
+#Strong Predictor
+
+#Statistical Significance between Cholestrol & Cardio Vascular Disease 
+chisqressmoke = chisq.test(train_cd$smoke,train_cd$cardio)
+chisqressmoke 
+
+#Strong Predictor
+
+#Statistical Significance between Glucose & Cardio Vascular Disease
+chisqresgluc = chisq.test(train_cd$gluc,train_cd$cardio)
+chisqresgluc 
+
+#Strong Predictor
+
+#Statistical Significance between Glucose & Cardio Vascular Disease
+chisqresalco = chisq.test(train_cd$alco,train_cd$cardio)
+chisqresalco 
+
+#Not statistically significant but missing by a small margin, therefore it is optional to consider it as a predictor
+
+#Statistical Significance between Physical Activity & Cardio Vascular Disease risk 
+chisqresact = chisq.test(train_cd$active,train_cd$cardio)
+chisqresact
+
+#Strong predictor
+
+
+
+```
