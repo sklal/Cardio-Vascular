@@ -81,7 +81,7 @@ cd$ap_lo = temp_min
 
 
 
-# fixing height - assuming the height of the population in females is not less than 150 cm(approx. 4 feet 11 inches) and not less than 155 cm(5 ft 1 inches) in males . Replacing the value below these parameters by their respective medians 
+# fixing height - assuming the height of the population in females is not less than 150 cm(approx. 4 feet 11 inches) and not less than 155 cm(5 ft 1 inches) in males and not above 191 cm (6 Ft 2 inches) in females and not above 6 ft 6 inches in male . Replacing the value below these parameters by their respective medians 
 
 female<-subset(cd,gender==1,select=c(gender,height,weight))
 male<-subset(cd,gender==2,select=c(gender,height,weight))
@@ -90,7 +90,7 @@ maleheightm<-median(male$height)
 
 femaleheightm<-median(female$height)
 
-cd$height<-ifelse(gender==1 & cd$height<150,femaleheightm, ifelse(gender==2 & cd$height<155,maleheightm,cd$height) )
+cd$height<-ifelse(cd$gender==1 & cd$height<150,femaleheightm,ifelse(cd$gender==1 & cd$height>191,femaleheightm, ifelse(cd$gender==2 & cd$height<155,maleheightm,ifelse(cd$gender==2 & cd$height>200,maleheightm,cd$height) )))
 
 cd$height
 
