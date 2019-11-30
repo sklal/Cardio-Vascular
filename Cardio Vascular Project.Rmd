@@ -37,124 +37,295 @@ summary(cd)
 ```
 
 
-```{r datawrangling, echo=FALSE}
-attach(cd)
-#Fixing the negative values and change them to their absolute values
+```{r outlierdetectionofage1}
+fivenum(cd$age)
+psych::describe(cd$age)
+hist(cd$age,
+     main = "Histogram of Age",
+     xlab = "Age in Years")
+boxplot(cd$age,
+        main = toupper("Boxplot of Age"),
+        ylab = "Age in years"
+        )
+outlier_values <- boxplot.stats(cd$age)$out  # outlier values.
+boxplot(cd$age, main="Age", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
 
-cd<-abs(cd) #negative systolic and diastolic value fixed 
-
-
-#Fixing systolic and diastolic
-
-#Systolic 
-
-#The scale in most sphygmomanometer ranges from 0 to 400 
-#Explanation for the below calculation
-# If the systolic/diastolic in the data is below 10 then it is possibly an error and would be 
-# If the systolic/diastolic in the data lies between 10 and 40 (most likely a typing error), then the data will be multiplied by 10
-# If the systolic/diastolic in the data lies between 400 and 10000 (Out of range and possible typing errors), then the data will be divided by 100
-# If the systolic/diastolic in the data is greater than 10000 (Out of range and possible typing errors), then the data will be divided by 100
-
+```
+The Skewness of age is -0.31 which lies in the acceptable range of approx. symmetry (-0.5 to 0.5)
 
 
+```{r Outliertreatmentofage2}
+qnt <- quantile(cd$age, probs=c(.25, .75), na.rm = T)
+caps <- quantile(cd$age, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(cd$age, na.rm = T)
+caps[1] <- cd$age[cd$age < (qnt[1] - H)]
+cd$age[cd$age > (qnt[2] + H)] <- caps[2]
 
-correction<-function(cr){ifelse(cr<10,NA,
-                        ifelse(cr>=10 & cr<40,cr*10,        
-                        ifelse(cr>400 & cr<4000,cr/10,
-                        ifelse(cr>4000 & cr<10000,cr/100,       
-                        ifelse(cr>=10000,cr/100,cr)))))}
+outlier_values <- boxplot.stats(cd$age)$out  # outlier values.
+boxplot(cd$age, main="Age", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
 
-cd$ap_hi<- correction(cd$ap_hi)
+``` 
 
-cd$ap_lo<- correction(cd$ap_lo)
 
+# As we can see now the age column has no outliers.we are good to go.
 
 
 
-# Systolic cannot be lower than Diastolic, therefore we will swap the values where such is the case in the dataset
+
+
+```{r genderEDA}
+cd[cd$gender==1,]$gender<-"F"
+cd[cd$gender==2,]$gender<-"M"
+cd$gender<-as.factor(cd$gender)
+table(factor(cd$gender))
+
+```
+##As we can see there are no outliers in gender variable
+
+```{r HeightEDA}
+fivenum(cd$height)
+psych::describe(cd$height)
+stat.desc(cd$height)
+
+hist(cd$height,
+     main = "Histogram of Height",
+     xlab = "Height in centimeter")
+
+outlier_values <- boxplot.stats(cd$cd$height)$out  # outlier values.
+boxplot(cd$height, main="Height", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+outliersper <- function(x){
+  length(which(x >  mean(x) + 3 * sd(x) | x < mean(x) - 3 * sd(x))  ) / length(x)
+}
+
+print(outliersper(cd$height))
+
+```
+## As we can see there are few of outliers in Height variable , which is around .004 percent of total data. since this is continous data so we are going treat with capping method. For missing values that lie outside the 1.5*IQR limits, we could cap it by replacing those observations outside the lower limit with the value of 5th %ile and those that lie above the upper limit, with the value of 95th %ile. Moreover the skewness is around -0.63 which means height column is left skewed.
+
+```{r Heightoutlierimpute}
+
+qnt <- quantile(cd$height, probs=c(.25, .75), na.rm = T)
+caps <- quantile(cd$height, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(cd$height, na.rm = T)
+cd$height[cd$height < (qnt[1] - H)] <- caps[1]
+cd$height[cd$height > (qnt[2] + H)] <- caps[2]
+
+outlier_values <- boxplot.stats(cd$height)$out  # outlier values.
+boxplot(cd$height, main="Height", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+```
+## As we can see now there are no outliers in height column.Also  earlier there was skewness in the column and it was (-0.63) but after the outlier treatment it reduces to 0.09 . so height variable is not skewed.so we are good to go.
+
+
+```{r WeightEDA}
+fivenum(cd$weight)
+psych::describe(cd$weight)
+stat.desc(cd$weight)
+
+hist(cd$weight,
+     main = "Histogram of Weight",
+     xlab = "Weight in kg")
+
+outlier_values <- boxplot.stats(cd$weight)$out  # outlier values.
+boxplot(cd$weight, main="Weight", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+outliersper <- function(x){
+  length(which(x >  mean(x) + 3 * sd(x) | x < mean(x) - 3 * sd(x))  ) / length(x)
+}
+
+print(outliersper(cd$weight))
+
+```
+##As we can see there are 10 % of data which are outlier . Also data is highly asymmetric as skew value is (1.01) which meamns age is highly right skewed.we will first treat outlier ,then we will check if skewness persists then we will apply transformation on the weight column.
+
+
+
+```{r Weightoutlierimpute}
+
+qnt <- quantile(cd$weight, probs=c(.25, .75), na.rm = T)
+caps <- quantile(cd$weight, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(cd$weight, na.rm = T)
+cd$weight[cd$weight < (qnt[1] - H)] <- caps[1]
+cd$weight[cd$weight > (qnt[2] + H)] <- caps[2]
+
+outlier_values <- boxplot.stats(cd$height)$out  # outlier values.
+boxplot(cd$height, main="Height", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+psych::describe(cd$weight)
+
+```
+## As we can see now there are no outliers and also skewness is 0.39 which means our data is approximately normal.we are good to go.
+
+```{r ap_hi(EDA)}
+fivenum(cd$ap_hi)
+psych::describe(cd$ap_hi)
+stat.desc(cd$ap_hi)
+
+hist(cd$ap_hi,
+     main = "Histogram of systolic Blood Pressure",
+     xlab = "Ap_hi")
+
+outlier_values <- boxplot.stats(cd$ap_hi)$out  # outlier values.
+boxplot(cd$ap_hi, main="systolic Blood Pressure", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+outliersper <- function(x){
+  length(which(x >  mean(x) + 3 * sd(x) | x < mean(x) - 3 * sd(x))  ) / length(x)
+}
+
+print(outliersper(cd$ap_hi))
+
+```
+## As we can see there is a 8 units of difference in mean and Meadian.which is really high . But the outliers are only around .05 % . This means that the values of outliers are of very values. Aslo the skew and kurtosis (85.29,7579.32)values are really very high. which again point to the fact that some values are incorrect or garbage values . we are to going treat the outliers in the next section and then we will analyse our column again.
+
+```{r SBPoutlierimpute}
+
+qnt <- quantile(cd$ap_hi, probs=c(.25, .75), na.rm = T)
+caps <- quantile(cd$ap_hi, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(cd$ap_hi, na.rm = T)
+cd$ap_hi[cd$ap_hi < (qnt[1] - H)] <- caps[1]
+cd$ap_hi[cd$ap_hi > (qnt[2] + H)] <- caps[2]
+
+outlier_values <- boxplot.stats(cd$ap_hi)$out  # outlier values.
+boxplot(cd$ap_hi, main="systolic Blood Pressure", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+psych::describe(cd$ap_hi)
+
+```
+
+## yes we were absolutely right the outliers were of very high and they were garbage value.After treating outliers , we can see our sweet boxplot(without any outliers) .Moreover our skew value is now under approximately normal range which is 0.54.
+
+```{r ap_low(EDA)}
+fivenum(cd$ap_lo)
+psych::describe(cd$ap_lo)
+stat.desc(cd$ap_lo)
+
+hist(cd$ap_lo,
+     main = "Histogram of Diastolic Blood Pressure",
+     xlab = "Ap_low")
+
+outlier_values <- boxplot.stats(cd$ap_lo)$out  # outlier values.
+boxplot(cd$ap_lo, main="Diastolic Blood Pressure", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+outliersper <- function(x){
+  length(which(x >  mean(x) + 3 * sd(x) | x < mean(x) - 3 * sd(x))  ) / length(x)
+}
+
+print(outliersper(cd$ap_lo))
+
+```
+
+## As we can see there is difference of 16 units in mean and median.From the histogram we can see that data is right skewed which is around (32.11). Also the kurtosisis really high. there are around 10% outliers so we are going to treat it.after that we are going to check again
+
+```{r DBDoutliertreatment}
+
+qnt <- quantile(cd$ap_lo, probs=c(.25, .75), na.rm = T)
+caps <- quantile(cd$ap_lo, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(cd$ap_lo, na.rm = T)
+cd$ap_lo[cd$ap_lo < (qnt[1] - H)] <- caps[1]
+cd$ap_lo[cd$ap_lo > (qnt[2] + H)] <- caps[2]
+
+outlier_values <- boxplot.stats(cd$ap_lo)$out  # outlier values.
+boxplot(cd$ap_lo, main="Diastolic Blood Pressure", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+psych::describe(cd$ap_lo)
+
+```
+## As we can see now after treatment of outliers , skew has also been in expected range(0.48) . now our variable is approximately normally distributed.
+
+```{r cholestrolEDA}
+
+cd$cholesterol<-as.factor(cd$cholesterol)
+table(factor(cd$cholesterol))
+
+```
+## As we can see there are no missing variables in this columns. category 1 has maximum values followed by category 2.
+
+```{r glucEDA}
+
+cd$gluc<-as.factor(cd$gluc)
+table(factor(cd$gender))
+
+```
+## It has no missing values and most of the values are under category 1(normal) followed by category 2(above normal)
+
+```{r smokeEDA}
+
+cd$smoke<-as.factor(cd$smoke)
+table(factor(cd$smoke))
+
+```
+
+## Smoking column also has no missing values . We wont be dealing with skewness here as skewness for categorical variable is not well defined . so we will ignore here . but it a category has very less value as compared to other we might consider it as outlier.
+
+```{r alcoholEDA}
+
+cd$alco<-as.factor(cd$alco)
+table(factor(cd$alco))
+
+```
+## No missing values or junk values in alcohol column as well.
+
+```{r activeEDA}
+
+cd$alco<-as.factor(cd$active)
+table(factor(cd$active))
+
+```
+
+
+```{r cardioEDA}
+cd[cd$cardio==0,]$cardio<-"Negative"
+cd[cd$cardio==1,]$cardio<-"Positive"
+cd$cardio<-as.factor(cd$cardio)
+table(factor(cd$cardio))
+```
+
+
+#Missing Value check and treatment on continous variables
+```{r Missingvalues}
+
+sum(is.na(cd$age))
+sum(is.na(cd$height))
+sum(is.na(cd$weight))
+sum(is.na(cd$ap_hi))
+sum(is.na(cd$ap_lo))
+
+```
+
+##There are no missing variables in the data , which means that we are good to go for our bivariate analysis.
+
+
+
+```{r Checkaphivsaplo}
 
 temp_min = pmin(cd$ap_hi, cd$ap_lo)
 cd$ap_hi = pmax(cd$ap_hi, cd$ap_lo)
 cd$ap_lo = temp_min
+```
+## Calculating BMI
 
-
-
-
-
-# fixing height - assuming the height of the population in females is not less than 150 cm(approx. 4 feet 11 inches) and not less than 155 cm(5 ft 1 inches) in males and not above 191 cm (6 Ft 2 inches) in females and not above 6 ft 6 inches in male . Replacing the value below these parameters by their respective medians 
-
-female<-subset(cd,gender==1,select=c(gender,height,weight))
-male<-subset(cd,gender==2,select=c(gender,height,weight))
-
-maleheightm<-median(male$height)
-
-femaleheightm<-median(female$height)
-
-cd$height<-ifelse(cd$gender==1 & cd$height<150,femaleheightm,ifelse(cd$gender==1 & cd$height>191,femaleheightm, ifelse(cd$gender==2 & cd$height<155,maleheightm,ifelse(cd$gender==2 & cd$height>200,maleheightm,cd$height) )))
-
-cd$height
-
-
-
-#fixing weight - assuming the weight of the population in females is not less than 45 kgs and not less than 55kgs  in males and both are not greater than 120Kgs. Replacing the value below these parameters by their respective means 
-
-maleweightm<-median(male$weight)
-
-femaleweightm<-median(female$weight)
-
-cd$weight<-ifelse(cd$gender==1 & cd$weight<45,femaleweightm, ifelse(cd$gender==1 & cd$weight>120,femaleweightm,ifelse(cd$gender==2 & cd$weight<55,maleweightm,ifelse(cd$gender==2 & cd$weight>120,maleweightm,cd$weight))))
-
-
-# Calculating BMI using weight and height. Potential predictor 
-
+```{r bmi, echo=FALSE}
 cd$bmi<- cd$weight/(cd$height*cd$height)*10000 # Weight in kgs and height in cms
 
-cd$bmi
-
-
-
-# Check for Null Values
-sum(is.na(cd))
-
-#The abnormally low values in the case of systolic and and diastolic are converted to NA. As they are very low in number (32) and contribute to only 0.04% of the data, they can be dropped.  
-
-cd<-na.omit(cd) 
-
-# dropping id column 
-
+```
+## Dropping the id column
+```{r drop id, echo=FALSE}
 cd$id<- NULL
 
 
-# Converting data types
-
-#Gender
-cd$gender<-as.factor(cd$gender)
-#Cholestrol
-cd$cholesterol<-as.factor(cd$cholesterol)
-#Glucose
-cd$gluc<-as.factor(cd$gluc)
-#Smoke
-cd$smoke<- as.factor(cd$smoke)
-#Alcohol
-cd$alco<- as.factor(cd$alco)
-#Active
-cd$active<- as.factor(cd$active)
-#Cardio
-cd$cardio<- as.factor(cd$cardio)
-
-
-#write.csv(cd,"D:\\Data Science\\Cardio Vascular\\test.csv", row.names = TRUE)
-summary(cd)
-
-
 ```
 
-```{r vis, echo = FALSE}
-#Visual 
-
-#Mishkin Sharmin ...
-
-```
 
 
 
@@ -170,82 +341,112 @@ test_cd =subset(cd, sample==FALSE)
 #write.csv(cd,"D:\\Data Science\\Cardio Vascular\\test_cd.csv", row.names = TRUE)
 ```
 
-
+#Statistical Significance between Age & Cardio Vascular Disease risk 
 ```{r stat, echo = FALSE}
-
-#Vishal - Relationship among predictors
-
-
-
 
 # Relationship with the target variable
 
-#Statistical Significance between Height & Cardio Vascular Disease risk 
+
 ttestresage = t.test(train_cd$age~train_cd$cardio)
 ttestresage
-
-#Strong Predictor
+```
+Strong significance
 
 #Statistical Significance between Height & Cardio Vascular Disease risk 
+```{r hvscd}
 ttestresheight = t.test(train_cd$height~train_cd$cardio)
 ttestresheight
-
-#Comparitively weak predictor
+```
+Comparitively weak significance
 
 #Statistical Significance between Weight & Cardio Vascular Disease risk 
+```{r wvscd}
 ttestresweight = t.test(train_cd$weight~train_cd$cardio)
 ttestresweight
+```
+Strong significance
 
-#Strong predictor
-
+```{r bvscd}
 #Statistical Significance between BMI & Cardio Vascular Disease risk 
 ttestresbmi = t.test(train_cd$bmi~train_cd$cardio)
 ttestresbmi
-
-#Strong predictor
+```
+Strong significance
 
 #Statistical Significance between Systolic & Cardio Vascular Disease 
+```{r svdcd}
 ttestressys = t.test(train_cd$ap_hi~train_cd$cardio)
 ttestressys 
-
-#Strong Predictor
+```
+Strong significance
 
 #Statistical Significance between Diastolic & Cardio Vascular Disease 
+```{r dvscd}
 ttestresdia = t.test(train_cd$ap_lo~train_cd$cardio)
 ttestresdia 
+```
+Strong significance
 
-#Strong Predictor
 
-#Statistical Significance between Cholestrol & Cardio Vascular Disease 
-chisqreschol = chisq.test(train_cd$cholesterol,train_cd$cardio)
-chisqreschol 
 
-#Strong Predictor
-
-#Statistical Significance between Cholestrol & Cardio Vascular Disease 
-chisqressmoke = chisq.test(train_cd$smoke,train_cd$cardio)
-chisqressmoke 
-
-#Strong Predictor
+#Statistical Significance between Cholestrol & Cardio Vascular Disease
+```{rcvdcd}
+chisqrescholesterol = chisq.test(train_cd$cholesterol,train_cd$cardio)
+chisqrescholesterol 
+```
+Strong significance
 
 #Statistical Significance between Glucose & Cardio Vascular Disease
+```{r gvscd}
 chisqresgluc = chisq.test(train_cd$gluc,train_cd$cardio)
 chisqresgluc 
-
-#Strong Predictor
+```
+Strong significance
 
 #Statistical Significance between Glucose & Cardio Vascular Disease
+```{r avscd}
 chisqresalco = chisq.test(train_cd$alco,train_cd$cardio)
 chisqresalco 
-
-#Not statistically significant but missing by a small margin, therefore it is optional to consider it as a predictor
+```
+Not statistically significant but missing by a small margin
 
 #Statistical Significance between Physical Activity & Cardio Vascular Disease risk 
+```{rscvscd}
 chisqresact = chisq.test(train_cd$active,train_cd$cardio)
 chisqresact
+```
+Strong significance
 
-#Strong predictor
+# Factor Analysis
+
+```{r subsettingforfactor}
+library(GPArotation)
+l1 <- data.frame(cd$age ,cd$height,cd$weight , cd$ap_hi,cd$ap_lo , cd$bmi)
+corrm<- cor(l1)     
+```
+
+```{r screeplot}
+scree(corrm, factors=TRUE, pc=TRUE, main="scree plot", hline=NULL, add=FALSE) ### SCREE PLOT
+eigen(corrm)$values                                                     ### EIGEN VALUES
+
+```
 
 
+## As we can see the scree plot there are only 3 values which have eigen value above 1 , this means that we are going to use factor analysis for PC3.
 
+```{r cumvarvar}
+library(plyr)
+eigen_values <- mutate(data.frame(eigen(corrm)$values)
+                       ,cum_sum_eigen=cumsum(eigen.corrm..values)
+                       , pct_var=eigen.corrm..values/sum(eigen.corrm..values)
+                       , cum_pct_var=cum_sum_eigen/sum(eigen.corrm..values))
+```
+
+```{r factor analysis}
+library(psych)
+FA<-fa(r=corrm, 3, rotate="varimax", SMC=FALSE, fm="minres")
+print(FA)                                                  
+FA_SORT<-fa.sort(FA)                                        
+ls(FA_SORT)                                                 
+FA_SORT$loadings
 ```
