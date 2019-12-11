@@ -1,20 +1,47 @@
 ---
-title: ""
-author: "Mishkin Khunger, Sanat Lal, Sharmin Kantharia, Vishal Pathak"
-date: "11/8/2019"
+title: "DTAS 6101"
+#author: "Mishkin Khunger, Sanat Lal, Sharmin Kantharia, Vishal Pathak"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE ,echo=FALSE}
+#```{r setup, include=FALSE ,echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r dataload}
+
+# {.tabset .tabset-fade .tabset-pills}
+***
+
+## **Chapter 1: Introduction** 
+
+Cardiovascular disease (CVD) is a class of disease that involves the heart or blood vessels. CVD includes coronary artery diseases (CAD) such as Angina and Myocardial Infarction (commonly known as heart attack).
+
+Other CVDs include stroke, heart failure, hypertensive heart disease, rheumatic heart disease, cardiomyopathy, abnormal heart rhythms, congenital heart disease, etc.
+
+On a global scale, CVDs are the leading cause of death. Altogether, CVD has resulted in 17.9 million deaths (32.1%) in 2015, which is an increment from 12.3 million (25.8%) in 1990.
+
+Deaths at a given age, from CVD, are more common and have been increasing in today’s day and age.
+
+Through this project and analysis, we aim to identify the factors which cause Cardiovascular diseases in adults.
+
+
+
+### SMART QUESTIONS
+
+1. Can age be a factor?
+2. How important are alcohol and smoking in affecting Cardiovascular Diseases?
+3. Apart from the most obvious factors, what other aspects of Gender can affect the risk of CVD?
+
+
+
+
+```{r dataload, include=FALSE, echo=TRUE}
 library(ggplot2)
 
 
-cd = read.csv("D:\\Data Science\\Cardio Vascular\\Cardio-Vascular\\cardio.csv")
+cd = read.csv("D:/Data Science/Cardio Vascular/Cardio-Vascular/cardio.csv")
 
 dim(cd)
 
@@ -23,7 +50,7 @@ cd$age<- (cd$age/365)
 cd$age<- round(cd$age) 
 ```
 
-```{r basicchecks}
+```{r basicchecks, include=FALSE, echo=TRUE}
 
 #Structure
 str(cd)
@@ -35,13 +62,15 @@ summary(cd)
 #Gender,cholestrol,gluc,smoke,alco,active,cardio are needed to be converted into categorical variable
 
 ```
-```{r lib}
+```{r lib, include=FALSE, echo=TRUE}
 library(pastecs)
 library(psych)
 library(Hmisc)
 ```
 
-```{r Outlierdetectionofage}
+## **Chapter 2: Data Cleaning** 
+
+```{r Outlierdetectionofage, include=TRUE, echo=TRUE}
 fivenum(cd$age)
 psych::describe(cd$age)
 stat.desc(cd$age)
@@ -62,7 +91,7 @@ As we can see skewness in -0.3 which means age is approximately symmetric. As if
 
 #### so in age as we can see the outliers are value 30 which are outside of 1.5*IQR . We are going to use capping methiod in order to treat outlier. For missing values that lie outside the 1.5*IQR limits, we could cap it by replacing those observations outside the lower limit with the value of 5th %ile and those that lie above the upper limit, with the value of 95th %ile.
 
-```{r Outliertreatmentofage}
+```{r Outliertreatmentofage, include=TRUE, echo=TRUE}
 qnt <- quantile(cd$age, probs=c(.25, .75), na.rm = T)
 caps <- quantile(cd$age, probs=c(.05, .95), na.rm = T)
 H <- 1.5 * IQR(cd$age, na.rm = T)
@@ -76,7 +105,7 @@ mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
 ``` 
 #### As we can see now the age column has no outliers.we are good to go.
 
-```{r HeightEDA}
+```{r HeightEDA, include=TRUE, echo=TRUE}
 fivenum(cd$height)
 psych::describe(cd$height)
 stat.desc(cd$height)
@@ -98,7 +127,7 @@ print(outliersper(cd$height))
 ```
 #### As we can see there are few of outliers in Height variable , which is around .004 percent of total data. since this is continous data so we are going treat with capping method. For missing values that lie outside the 1.5*IQR limits, we could cap it by replacing those observations outside the lower limit with the value of 5th %ile and those that lie above the upper limit, with the value of 95th %ile. Moreover the skewness is around -0.63 which means height column is left skewed.
 
-```{r Heightoutlierimpute}
+```{r Heightoutlierimpute, include=TRUE, echo=TRUE}
 
 qnt <- quantile(cd$height, probs=c(.25, .75), na.rm = T)
 caps <- quantile(cd$height, probs=c(.05, .95), na.rm = T)
@@ -114,7 +143,7 @@ mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
 #### As we can see now there are no outliers in height column.Also  earlier there was skewness in the column and it was (-0.63) but after the outlier treatment it reduces to 0.09 . so height variable is not skewed.so we are good to go.
 
 
-```{r WeightEDA}
+```{r WeightEDA, include=TRUE, echo=TRUE}
 fivenum(cd$weight)
 psych::describe(cd$weight)
 stat.desc(cd$weight)
@@ -138,7 +167,7 @@ print(outliersper(cd$weight))
 
 
 
-```{r Weightoutlierimpute}
+```{r Weightoutlierimpute, include=TRUE, echo=TRUE}
 
 qnt <- quantile(cd$weight, probs=c(.25, .75), na.rm = T)
 caps <- quantile(cd$weight, probs=c(.05, .95), na.rm = T)
@@ -155,7 +184,7 @@ psych::describe(cd$weight)
 ```
 #### As we can see now there are no outliers and also skewness is 0.39 which means our data is approximately normal.we are good to go.
 
-```{r ap_hi(EDA)}
+```{r ap_hi(EDA), include=TRUE, echo=TRUE}
 fivenum(cd$ap_hi)
 psych::describe(cd$ap_hi)
 stat.desc(cd$ap_hi)
@@ -177,7 +206,7 @@ print(outliersper(cd$ap_hi))
 ```
 #### As we can see there is a 8 units of difference in mean and Meadian.which is really high . But the outliers are only around .05 % . This means that the values of outliers are of very values. Aslo the skew and kurtosis (85.29,7579.32)values are really very high. which again point to the fact that some values are incorrect or garbage values . we are to going treat the outliers in the next section and then we will analyse our column again.
 
-```{r SBPoutlierimpute}
+```{r SBPoutlierimpute, include=TRUE, echo=TRUE}
 
 qnt <- quantile(cd$ap_hi, probs=c(.25, .75), na.rm = T)
 caps <- quantile(cd$ap_hi, probs=c(.05, .95), na.rm = T)
@@ -195,7 +224,7 @@ psych::describe(cd$ap_hi)
 
 #### yes we were absolutely right the outliers were of very high and they were garbage value.After treating outliers , we can see our sweet boxplot(without any outliers) .Moreover our skew value is now under approximately normal range which is 0.54.
 
-```{r ap_low(EDA)}
+```{r ap_low(EDA), include=TRUE, echo=TRUE}
 fivenum(cd$ap_lo)
 psych::describe(cd$ap_lo)
 stat.desc(cd$ap_lo)
@@ -218,7 +247,7 @@ print(outliersper(cd$ap_lo))
 
 #### As we can see there is difference of 16 units in mean and median.From the histogram we can see that data is right skewed which is around (32.11). Also the kurtosisis really high. there are around 10% outliers so we are going to treat it.after that we are going to check again
 
-```{r DBDoutliertreatment}
+```{r DBDoutliertreatment, include=TRUE, echo=TRUE}
 
 qnt <- quantile(cd$ap_lo, probs=c(.25, .75), na.rm = T)
 caps <- quantile(cd$ap_lo, probs=c(.05, .95), na.rm = T)
@@ -235,8 +264,8 @@ psych::describe(cd$ap_lo)
 ```
 #### As we can see now after treatment of outliers , skew has also been in expected range(0.48) . now our variable is approximately normally distributed.
 
-#Missing Value check and treatment on continous variables
-```{r Missingvalues}
+#### Missing Value check and treatment on continous variables
+```{r Missingvalues, include=TRUE, echo=TRUE}
 
 sum(is.na(cd$age))
 sum(is.na(cd$height))
@@ -246,7 +275,7 @@ sum(is.na(cd$ap_lo))
 
 ```
 
-```{r genderEDA}
+```{r genderEDA, include=FALSE, echo=TRUE}
 cd[cd$gender==1,]$gender<-"F"
 cd[cd$gender==2,]$gender<-"M"
 cd$gender<-as.factor(cd$gender)
@@ -257,7 +286,7 @@ table(factor(cd$gender))
 
 
 
-```{r Checkaphivsaplo}
+```{r Checkaphivsaplo, include=FALSE, echo=TRUE}
 
 temp_min = pmin(cd$ap_hi, cd$ap_lo)
 cd$ap_hi = pmax(cd$ap_hi, cd$ap_lo)
@@ -266,14 +295,8 @@ cd$ap_lo = temp_min
 #### since diastolic and systolic are connected and diastolic will always be greater than systolic . so for sanity we have implement few changes to swap values if sysytolic is less than diastolic
 
 
-```{r calculateBMI}
 
-cd$bmi <- cd$weight/(cd$height*cd$height)*10000
-
-
-```
-
-```{r fac, include=FALSE}
+```{r fac, include=FALSE, include=FALSE, echo=TRUE}
 #Gender
 cd$gender<-as.factor(cd$gender)
 #Cholestrol
@@ -290,44 +313,9 @@ cd$active<- as.factor(cd$active)
 cd$cardio<- as.numeric(cd$cardio)
 ```
 
-```{r subsettingforfactor}
-library(GPArotation)
-l1 <- data.frame(cd$age ,cd$height,cd$weight , cd$ap_hi,cd$ap_lo , cd$bmi)
-corrm<- cor(l1)     
-```
-
-```{r screeplot}
-scree(corrm, factors=TRUE, pc=TRUE, main="scree plot", hline=NULL, add=FALSE) ### SCREE PLOT
-eigen(corrm)$values                                                     ### EIGEN VALUES
-
-```
 
 
-#### As we can see the scree plot there are only 3 values which have eigen value above 1 , this means that we are going to use factor analysis for PC3.
-
-```{r cumvarvar}
-library(plyr)
-eigen_values <- mutate(data.frame(eigen(corrm)$values)
-                       ,cum_sum_eigen=cumsum(eigen.corrm..values)
-                       , pct_var=eigen.corrm..values/sum(eigen.corrm..values)
-                       , cum_pct_var=cum_sum_eigen/sum(eigen.corrm..values))
-```
-
-```{r factor analysis}
-library(psych)
-FA<-fa(r=corrm, 3, rotate="varimax", SMC=FALSE, fm="minres")
-print(FA)                                                  
-FA_SORT<-fa.sort(FA)                                        
-ls(FA_SORT)                                                 
-FA_SORT$loadings
-```
-
-#### From factor analysis we have taken 3 factors in account as per factor loadings. and those are bmi , api_hi , height. So we are good to go for our model implementation.
-
-
-
-
-```{r cardioEDA}
+```{r cardioEDA, include=FALSE, echo=TRUE}
 cd[cd$cardio==0,]$cardio<-"Negative"
 cd[cd$cardio==1,]$cardio<-"Positive"
 cd$cardio<-as.factor(cd$cardio)
@@ -340,20 +328,20 @@ table(factor(cd$cardio))
 
 
 
-## Calculating BMI
+#### Calculating BMI
 
 ```{r bmi, echo=FALSE}
 cd$bmi<- cd$weight/(cd$height*cd$height)*10000 # Weight in kgs and height in cms
 
 ```
-## Dropping the id column
+#### Dropping the id column
 ```{r drop id, echo=FALSE}
 cd$id<- NULL
 
 
 ```
 
-```{r levels}
+```{r levels, include=FALSE, echo=TRUE}
 levels(cd$gender)
 levels(cd$cholesterol)
 levels(cd$gluc)
@@ -363,7 +351,7 @@ levels(cd$active)
 
 ```
 
-```{r dummy variables}
+```{r dummy variables, include=FALSE, echo=TRUE}
 cd$cholnormal  <- ifelse(cd$cholesterol == 1, 1, 0)
 cd$cholabovenorm <- ifelse(cd$cholesterol == 2, 1, 0)
 sum(cd$cholabovenorm)
@@ -378,7 +366,10 @@ sum(cd$glucabovenorm)
 
 #### so we have create 2 dummy variables for cholestrol and 2 dummy variaables for glucose category and in both the columns there are 3 levels
 
-```{r visualization1}
+
+## **Chapter 3: Graphical Representation** 
+
+```{r visualization1,  echo=FALSE}
 library(ggplot2)
 
 #age count , affected vs not affected
@@ -391,12 +382,11 @@ barplot(counts, main="Age distribution",
 ```
 
 
-#### We see that most people who are suffering from cardio vascular diseases are of the age 60, followed by 56.
-Majorly, people belonging to the age group 50+ are suffering from the disease.
+#### We see that most people who are suffering from cardio vascular diseases are of the age 60, followed by 56.Majorly, people belonging to the age group 50+ are suffering from the disease.
 
 
 
-```{r v2}
+```{r v2,  echo=FALSE}
 
 
 #plot(cd$age,cd$ap_hi, main="Scatterplot Example",
@@ -418,15 +408,14 @@ pie(mytable, labels = lbls,
 
 
 #### There are three cholestrol levels-
-1- Normal
-2- Above Normal
-3- Way above normal
+#### 1- Normal
+#### 2- Above Normal
+#### 3- Way above normal
 
-The above pie chart shows that 3/4th of the population come under the normal cholestrol category.We see that most people who are suffering from cardio vascular diseases are of the age 60, followed by 56.
-Majorly, people belonging to the age group 50+ are suffering from the disease.
+#### The above pie chart shows that 3/4th of the population come under the normal cholestrol category.We see that most people who are suffering from cardio vascular diseases are of the age 60, followed by 56.Majorly, people belonging to the age group 50+ are suffering from the disease.
 
 
-```{r v3}
+```{r v3, echo=FALSE}
 library("ggplot2")
 
     ggplot(cd, aes(x= cholesterol,  group=cd$gender)) + 
@@ -442,7 +431,7 @@ library("ggplot2")
 #### The above graph shows that there are comparitively higher chances of women to have a cardio vascular disease where 76.9% of the women have normal cholestrol level.
 
 
-```{r v4}
+```{r v4, echo=FALSE}
 
 library("ggplot2")
 attach(cd)
@@ -459,7 +448,7 @@ barplot(counts, main="Gender distribution",
 #### The above graph suggests that there are higher number of cases for women, but there are higher number of negative cases for women and higher number of positive cases for men.
 
 
-```{r glvscd, include=FALSE, echo=TRUE}
+```{r glvscd, echo=FALSE}
   
   library("ggplot2")
   attach(cd)
@@ -472,7 +461,14 @@ barplot(counts, main="Gender distribution",
 ```
 
 
-```{r chcd, include=FALSE,echo=TRUE}
+#### There are three Glucose levels-
+#### 1- Normal
+#### 2- Above Normal
+#### 3- Way above normal
+
+#### The above graph suggests that, the majority of the population comes under normal glucose level. Additionally, for normal glucose levels the chances of having cardio-vascular disease is less whereas for above normal glucose levels the chances of having a cardio-vascular disease is more.
+
+```{r chcd, echo=FALSE}
   
   library("ggplot2")
   attach(cd)
@@ -483,8 +479,14 @@ barplot(counts, main="Gender distribution",
     xlab="Cholesterol", ylab="Counts", col=c("black","red"),
     legend = rownames(counts), beside=TRUE)
 ```
+
+
+#### The above graph suggests that, the majority of the population comes under normal glucose level. Additionally, for normal Cholesterol levels the chances of having cardio-vascular disease is less whereas for above normal cholesterol levels the chances of having a cardio-vascular disease is more.  
+
+## **Chapter 4: Data Division & Statistical Tests** 
+
   
-```{r dividedata, include=FALSE}
+```{r dividedata,echo= FALSE}
 require(caTools) #install caTools
 set.seed(123)
 sample = sample.split(cd,SplitRatio = 0.70)
@@ -495,7 +497,7 @@ test_cd =subset(cd, sample==FALSE)
 #### we are dividing the data into test and train.
 
 
-```{r stat, echo = TRUE}
+```{r stat, echo= FALSE}
 
 # Relationship with the target variable
 
@@ -503,82 +505,119 @@ test_cd =subset(cd, sample==FALSE)
 ttestresage = t.test(train_cd$age~train_cd$cardio)
 ttestresage
 ```
-####Strong significance
+
+
+#### Strong significance
 
 #### Statistical Significance between Height & Cardio Vascular Disease risk 
-```{r hvscd}
+```{r hvscd, echo= FALSE}
 ttestresheight = t.test(train_cd$height~train_cd$cardio)
 ttestresheight
 ```
+
+
+
 #### Comparitively weak significance
 
 #### Statistical Significance between Weight & Cardio Vascular Disease risk 
-```{r wvscd}
+```{r wvscd, echo= FALSE}
+###```{r wvscd, include=FALSE, echo=TRUE}
 ttestresweight = t.test(train_cd$weight~train_cd$cardio)
 ttestresweight
 ```
+
+
 #### Strong significance
 
-```{r bvscd, include=FALSE}
+```{r bvscd, echo= FALSE}
+##```{r bvscd, include=FALSE, echo=TRUE}
 #Statistical Significance between BMI & Cardio Vascular Disease risk 
 ttestresbmi = t.test(train_cd$bmi~train_cd$cardio)
 ttestresbmi
 ```
+
+
 #### Strong significance
 
 #### Statistical Significance between Systolic & Cardio Vascular Disease 
-```{r svdcd, include=FALSE}
+```{r svdcd, echo=FALSE}
+#```{r svdcd, include=FALSE, echo=TRUE}
 ttestressys = t.test(train_cd$ap_hi~train_cd$cardio)
 ttestressys 
 ```
+
+
 #### Strong significance
 
 #### Statistical Significance between Diastolic & Cardio Vascular Disease 
-```{r dvscd, include=FALSE}
+```{r dvscd, echo=FALSE}
+#```{r dvscd, include=FALSE, echo=TRUE}
 ttestresdia = t.test(train_cd$ap_lo~train_cd$cardio)
 ttestresdia 
 ```
+
 #### Strong significance
 
 
 
 #### Statistical Significance between Cholestrol & Cardio Vascular Disease
-```{r cvdcd, include=FALSE}
+```{r cvdcd, echo=FALSE}
+#```{r cvdcd, include=FALSE, echo=TRUE}
 chisqrescholesterol = chisq.test(train_cd$cholesterol,train_cd$cardio)
 chisqrescholesterol 
 ```
+
+
 #### Strong significance
 
 #### Statistical Significance between Glucose & Cardio Vascular Disease
-```{r gvscd, include=FALSE}
+```{r gvscd, echo=FALSE}
+#```{r gvscd, include=FALSE, echo=TRUE}
+
 chisqresgluc = chisq.test(train_cd$gluc,train_cd$cardio)
 chisqresgluc 
 ```
+
 #### Strong significance
 
 #### Statistical Significance between Glucose & Cardio Vascular Disease
-```{r avscd, include=FALSE}
+```{r avscd, echo=FALSE}
+#```{r avscd, include=FALSE, echo=TRUE}
 chisqresalco = chisq.test(train_cd$alco,train_cd$cardio)
 chisqresalco 
 ```
+
 #### Not statistically significant but missing by a small margin
 
 #### Statistical Significance between Physical Activity & Cardio Vascular Disease risk 
-```{r scvscd, include=FALSE}
+```{r scvscd, echo=FALSE}
+#```{r scvscd, include=FALSE, echo=TRUE}
 chisqresact = chisq.test(train_cd$active,train_cd$cardio)
 chisqresact
 ```
+
+
 #### Strong significance
 
+## **Chapter 5: Models** 
+ 
 
-```{r logisticmodel, include=FALSE, echo=TRUE}
+#### Logistic Regression
+
+```{r logisticmodel, echo=FALSE }
+#```{r avscd, echo= FALSE}
+#```{r logisticmodel, include=FALSE, echo=TRUE}
 
 fit <- glm(cardio ~ bmi+weight+ap_hi+height+glucnorm+glucabovenorm+smoke+alco+active+cholnormal+cholabovenorm , data = train_cd , family = binomial(logit) )
 summary(fit)
+
 ```
+
+
 #### As you can see the factors we have used to build model is giving results . For most of the variables the p value is low that means they are effective in predicting the cario deseas e. bmi and height are 2 variables which are not significant . alos the diffrence in value of null deviance and residual deviance is high . which means model is fitting.
 
-```{r letscheck, include=FALSE, echo=TRUE}
+```{r letscheck,  echo=FALSE}
+#```{r letscheck, include=FALSE, echo=TRUE}
 
 require(MASS)
 step3<- stepAIC(fit,direction="both")
@@ -592,14 +631,17 @@ step3$anova
 #### As we can see the step aic functio has removed bmi , from the model and gave our best predictors.Now we gonna run our model again by removing BMI and compare it as well.
 
 
-```{r secondmodel, include=FALSE, echo=TRUE}
+```{r secondmodel,  echo=FALSE}
+#```{r secondmodel, include=FALSE, echo=TRUE}
 fit2<-glm(cardio ~ weight + ap_hi + height + glucnorm + glucabovenorm + 
     smoke + alco + active + cholnormal + cholabovenorm , data = train_cd , family = binomial(logit) )
 summary(fit2)
 ```
+
+
 #### As we can see there AIC value for 1st and second model is almost same which means BMI was not impacting the model.
 
-```{r letscheckhl, include=FALSE, echo=TRUE}
+```{r letscheckhl, echo=FALSE}
 library(ResourceSelection)
 hl <- hoslem.test(train_cd$cardio, fitted(fit2), g = 10)
 
@@ -608,7 +650,7 @@ cbind(hl$expected , hl$observed)
 ```
 
 
-```{r letscheckconcordance, include=FALSE, echo=TRUE}
+```{r letscheckconcordance, echo=FALSE}
 Concordance = function(GLM.binomial) {
   outcome_and_fitted_col = cbind(GLM.binomial$y, GLM.binomial$fitted.values)
   # get a subset of outcomes where the event actually happened
@@ -669,7 +711,7 @@ vif(fit2)
 
 #### Now we are going to see the AUC And KS statsics for which we will need ROCR Package.
 
-```{r Predict, include=FALSE, echo=TRUE }
+```{r Predict, echo=FALSE}
 
 pred <- predict(fit2 , newdata = test_cd,type = 'response')
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
@@ -678,10 +720,11 @@ y_act <- test_cd$cardio
 
 
 #mean(y_pred == y_act)
+
 ```
 #### As we can see in prediction we have an accuracy rate of 72 %
 
-```{r completely, include=FALSE, echo=TRUE}
+```{r completely, echo=FALSE}
 library(sqldf)
 t1<-cbind(train_cd, Prob=predict(fit2,train_cd , type="response" ))
 names(t1)
@@ -734,11 +777,13 @@ View(t2_DA)
 
 
 
-```{r cdch}
+```{r cdch, echo=FALSE }
+
 cd$cardio<-as.factor(cd$cardio)
+
 ```
 
-# Decision Tree
+#### Decision Tree
 
 ### We use the packages 'rpart' and 'rpart.plot' inorder to compute and plot the decision trees. The rpart() uses our target feature (cardio) against other features. 
 
@@ -753,7 +798,7 @@ cd$cardio<-as.factor(cd$cardio)
 #### The accuracy of this decision tree is 71.66%
 
 
-```{r DT, echo=FALSE}
+```{r DT,  echo=FALSE}
 #install.packages("party")
 #install.packages("rpart")
 library("rpart")
@@ -789,12 +834,12 @@ table_mat
 
 accuracy_dt <- sum(diag(table_mat)) / sum(table_mat)
 accuracy_dt
+
 ```
 
+#### Random Forest
 
-
-
-```{r random forest}
+```{r random forest,  echo=FALSE}
 library(randomForest)
 set.seed(123)
 rf_cd <- randomForest(cardio~.-weight-height, data=train_cd,
@@ -805,10 +850,12 @@ print(rf_cd)
 attributes(rf_cd)
 
 ```
+
 #### Taking Age,Gender, Blood Pressure (Systolic and Diastolic), Alcohol,Smoking,Glucose,Active and BMI as predictors we get an Out of Bag ( set of boostrap datasets which does not contain  certain records from the original dataset) error rate of 26.68%
 
 
-```{r oober, }
+```{r oober, echo=FALSE}
+
 oob.error.data <- data.frame(
   Trees=rep(1:nrow(rf_cd$err.rate), times=3),
   Type=rep(c("OOB", "Negative", "Positive"), each=nrow(rf_cd$err.rate)),
@@ -819,34 +866,37 @@ oob.error.data <- data.frame(
 ggplot(data=oob.error.data, aes(x=Trees, y=Error)) +
   geom_line(aes(color=Type))
 ```
+
 #### Here we can see that error rate is the most stable around 500 trees for both the results as well as OOB. Therefore, we will continue with the  default value.
 
-```{r oob, include=FALSE, echo=TRUE}
+```{r oob,  echo=FALSE}
 oob.rf_cd <- vector(length=10)
 for(i in 1:10) {
   temp.model <- randomForest(cardio ~ .-weight-height, data=train_cd, mtry=i, ntree=500)
   oob.rf_cd[i] <- temp.model$err.rate[nrow(temp.model$err.rate),1]
 }
-oob.rf_cd
+summary(oob.rf_cd)
 ```
 
 #### Here we can see that, we get the best result for mtry= 3 in terms of Out of Bag error rate
 
-```{r pred1}
+```{r pred1,  echo=FALSE}
 library(caret)
 p1 <- predict(rf_cd, train_cd)
-confusionMatrix(p1, train_cd$cardio)
+t11 <-confusionMatrix(p1, train_cd$cardio)
 ```
+
 #### The training set gives an accuracy of 76.86% 
 
-```{r pred2}
+```{r pred2,  echo=FALSE}
 library(caret)
 p2 <- predict(rf_cd, test_cd)
-confusionMatrix(p2, test_cd$cardio)
+t2<- confusionMatrix(p2, test_cd$cardio)
+
 ```
 
 #### The test set gives an accuracy of 73.58%
-```{r varimpo}
+```{r varimpo, echo=FALSE}
 hist(treesize(rf_cd),
      main = "No. of Nodes for the Trees",
      col = "green")
@@ -860,205 +910,33 @@ importance(rf_cd)
 varUsed(rf_cd)
 
 ```
+
+
 #### The variable importance plot shows that in terms of Mean Decrease Gini value we get Systolic(Ap_hi), Diastolic(Ap_lo),bm, age and cholesterol to be our top 5 predictors
 
 
-```{r KNN}
-#install package class
-library("class")
+## **Chapter 5: Top performing features** 
 
-head(cd, 20)
-table(cd$cardio)
+#### Comparing our 3 models, we found that the most important features are:
+#### Ap_hi (Systolic blood pressure)
+#### Cholesterol
+#### Age 
+#### Ap_lo (Diastolic blood pressure)
+#### BMI
+#### Glucose
 
-#random number generation
-set.seed(9850)
-gp <- runif(nrow(cd))
-cd <- cd[order(gp),]
+## **Chapter 6: Limitations** 
 
+#### Lack of more detailed factors such as genetics (family history), complains of chest pain, shock factor, etc.
+#### Time periods for when a factor acted up were not available.
+#### Separate data for both types of cholesterol (HDL and LDL), would have helped better in the classification.
 
-head(cd)
 
-str(cd)
+## **Chapter 7: Conclusion** 
 
-#normalizing the numerical features so that none of the features have undue influence on the prediction of our classes
+#### Through our analysis, it was clear that most of the important features that run a risk to affect CVD are those that can be directly or indirectly affected by our health choices.
+#### Some factors, however, are not in our control. After the age of 55, our chances to acquire a CVD increases greatly. This risk is greater for men than women between the ages of 40 – 59.
+#### BMI is another factor that affects getting CVD. Considering this factor in terms of gender, middle-aged women tend to have a higher BMI than men. This is because, the body fat mass in middle-aged women tends to increase in general. M (30%) W (42%).
+#### Features such as alcohol, smoking and physical activity are indirectly related to running a risk of CVD. 
 
-normalize <- function(x) {
-  + return ( (x- min(x)) / (max(x) - min(x)))}
-
-
-cd_n <- as.data.frame(lapply(cd[,c(1,3,4,5,6,13)], normalize))
-
-str(cd_n)
-
-summary(cd_n)
-
-k= sqrt(nrow(cd))
-
-k   #265 , k is the number of neighbours and is computed by taking the suared root of the total number of observations. Preferably should be an odd number beacuse in default mode KNN takes majority vote and in case of a tie its good to have an odd number
-
-m11 <- knn(train = train_cd, test = test_cd, cl=train_cd_target , k=265)
-
-m11
-
-
-#confusion matrix
-
-table(test_cd_target, m1)
-
-acc <- 100 * sum(test_cd_target == m1)/ NROW(test_cd_target)
-
-acc
-
-#install package caret
-library(caret)
-
-confusionMatrix(table(m1,test_cd_target))
-
-#to improve the performance of the model we can use this loop, which will give the best value of k
-
-i=1
-k.optm=1
-for (i in 1:265){
-  
-  knn.mod <- knn(train = train_cd, test=test_cd, cl=train_cd_target, k=i)
-  
-  k.optm[i] <- 100* sum(test_cd_target == knn.mod)/NROW(test_cd_target)
-  
-  k=i
-  
-  cat(k,'=', k.optm[i], '\n')
-  
-}
- 
-plot(k.optm, type="b", xlab="k-value", ylab="accuracy level")
-
-
-```
-
-#### For our prediction using K- Nearest Neighbour, the value of k (which is the number of neighbours) is usually chosen taking the squared root of the total number of observations, preferably should be an odd number beacuse in default mode KNN takes majority vote and in case of a tie its good to have an odd number. Hence, for our prediction we are taking k=265.
-
-
-```{r traink}
-m2 <- knn(train = train_cd, test = test_cd, cl=train_cd_target , k=10)
-
-table(test_cd_target, m2)
-
-acc2 <- 100 * sum(test_cd_target == m2)/ NROW(test_cd_target)
-
-acc2
-
-```
-
-
-```{r Normalization}
-#install package class
-library("class")
-
-head(cd, 20)
-table(cd$cardio)
-
-#random number generation
-set.seed(9850)
-gp <- runif(nrow(cd))
-cd <- cd[order(gp),]
-
-
-head(cd)
-
-str(cd)
-
-
-normalize <- function(x) {
-  + return ( (x- min(x)) / (max(x) - min(x)))}
-
-
-cd_n <- as.data.frame(lapply(cd[,c(1,3,4,5,6,13)], normalize))
-cd_n_target <- cd[,12]
-str(cd_n)
-
-summary(cd_n)
-
-```
-#### We normalized the numerical features so that none of the features have undue influence on the prediction of our classes.
-
-
-```{r KNNt}
-
-#train test split
-
-require(caTools) #install caTools
-set.seed(123)
-sample = sample.split(cd,SplitRatio = 0.70)
-train_cd =subset(cd,sample ==TRUE)
-test_cd =subset(cd, sample==FALSE)
-
-train_cd_target <- train_cd[,12]
-test_cd_target <- test_cd[,12]
-
-k= sqrt(nrow(cd))
-k   
-
-m1 <- knn(train = train_cd, test = test_cd, cl=train_cd_target , k=265)
-
-m1
-
-
-#confusion matrix
-
-
-table(test_cd_target, m1)
-
-acc <- 100 * sum(test_cd_target == m1)/ NROW(test_cd_target)
-
-acc
-
-
-
-#install package caret
-library(caret)
-
-confusionMatrix(table(m1,test_cd_target))
-
-```
-
-#### For our prediction using K- Nearest Neighbour, the value of k (which is the number of neighbours) is usually chosen taking the squared root of the total number of observations, preferably should be an odd number beacuse in default mode KNN takes majority vote and in case of a tie its good to have an odd number. Hence, for our prediction we are taking k=265.
-
-#### Using k as the squared root of the total number of data-points, we are getting the accuracy of 73% which is great but we can try different values of k in order to achieve better accuracy. Further, the Kappa statistic which is a metric that compares the observed accuracy with the expected accuracy(random chance) is comparatively low with a value of 0.4741. Hence we will try different values of k to achieve better 
-
-
-```{r loopk}
-   
-
-i=1
-k.optm=1
-for (i in 1:10){  knn.mod <- knn(train = train_cd, test=test_cd, cl=train_cd_target, k=i)
-  
-  k.optm[i] <- 100* sum(test_cd_target == knn.mod)/NROW(test_cd_target)
-  
-  k=i
-  
-  cat(k,'=', k.optm[i], '\n')
-  plot(k.optm, type="b", xlab="k-value", ylab="accuracy level")}
-
-```
-
-#### We applied a loop to compute accuracy for k ranging from 2 to 10.
-
-
-```{r knn2}
-m2 <- knn(train = train_cd, test = test_cd, cl=train_cd_target , k=7)
-
-table(test_cd_target, m2)
-
-acc2 <- 100 * sum(test_cd_target == m2)/ NROW(test_cd_target)
-
-acc2
-
-nrow(m2)
-
-
-```
-
-####  On applying the loop, we attained highest accuracy of 77.35 at k=7. 
-
-### VISUALISATION
+#### In general take care of your health and be happy.
