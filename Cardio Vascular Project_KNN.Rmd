@@ -1,0 +1,271 @@
+---
+title: ""
+author: "Mishkin Khunger, Sanat Lal, Sharmin Kantharia, Vishal Pathak"
+date: "11/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+cd <- read.csv("cardio.csv")
+cd = subset(cd, select = -c(1) )
+head(cd)
+nrow(cd)
+length(cd)
+summary(cd)
+cd$age<- (cd$age/365)
+
+cd$age<- round(cd$age) 
+
+```
+
+```{r, include=FALSE}
+attach(cd)
+#Fixing the negative values and change them to their absolute values
+
+
+
+cd<-abs(cd) #negative systolic and diastolic value fixed 
+
+
+#Fixing systolic and diastolic
+
+#Systolic 
+
+#The scale in most sphygmomanometer ranges from 0 to 400 
+#Explanation for the below calculation
+# If the systolic/diastolic in the data is below 10 then it is possibly an error and would be 
+# If the systolic/diastolic in the data lies between 10 and 40 (most likely a typing error), then the data will be multiplied by 10
+# If the systolic/diastolic in the data lies between 400 and 10000 (Out of range and possible typing errors), then the data will be divided by 100
+# If the systolic/diastolic in the data is greater than 10000 (Out of range and possible typing errors), then the data will be divided by 100
+
+
+
+
+correction<-function(cr){ifelse(cr<10,NA,
+                        ifelse(cr>=10 & cr<40,cr*10,        
+                        ifelse(cr>400 & cr<4000,cr/10,
+                        ifelse(cr>4000 & cr<10000,cr/100,       
+                        ifelse(cr>=10000,cr/100,cr)))))}
+
+cd$ap_hi<- correction(cd$ap_hi)
+
+cd$ap_lo<- correction(cd$ap_lo)
+
+
+
+
+# Systolic cannot be lower than Diastolic, therefore we will swap the values where such is the case in the dataset
+
+temp_min = pmin(cd$ap_hi, cd$ap_lo)
+cd$ap_hi = pmax(cd$ap_hi, cd$ap_lo)
+cd$ap_lo = temp_min
+
+
+
+
+
+# fixing height - assuming the height of the population in females is not less than 150 cm(approx. 4 feet 11 inches) and not less than 155 cm(5 ft 1 inches) in males and not above 191 cm (6 Ft 2 inches) in females and not above 6 ft 6 inches in male . Replacing the value below these parameters by their respective medians 
+
+female<-subset(cd,gender==1,select=c(gender,height,weight))
+male<-subset(cd,gender==2,select=c(gender,height,weight))
+
+maleheightm<-median(male$height)
+
+femaleheightm<-median(female$height)
+
+cd$height<-ifelse(cd$gender==1 & cd$height<150,femaleheightm,ifelse(cd$gender==1 & cd$height>191,femaleheightm, ifelse(cd$gender==2 & cd$height<155,maleheightm,ifelse(cd$gender==2 & cd$height>200,maleheightm,cd$height) )))
+
+cd$height
+
+
+
+#fixing weight - assuming the weight of the population in females is not less than 45 kgs and not less than 55kgs  in males and both are not greater than 120Kgs. Replacing the value below these parameters by their respective means 
+
+maleweightm<-median(male$weight)
+
+femaleweightm<-median(female$weight)
+
+cd$weight<-ifelse(cd$gender==1 & cd$weight<45,femaleweightm, ifelse(cd$gender==1 & cd$weight>120,femaleweightm,ifelse(cd$gender==2 & cd$weight<55,maleweightm,ifelse(cd$gender==2 & cd$weight>120,maleweightm,cd$weight))))
+
+
+# Calculating BMI using weight and height. Potential predictor 
+
+cd$bmi<- cd$weight/(cd$height*cd$height)*10000 # Weight in kgs and height in cms
+
+cd$bmi
+
+# Check for Null Values
+sum(is.na(cd))
+
+#The abnormally low values in the case of systolic and and diastolic are converted to NA. As they are very low in number (32) and contribute to only 0.04% of the data, they can be dropped.  
+
+cd<-na.omit(cd) 
+
+# dropping id column 
+
+cd$id<- NULL
+
+
+summary(cd)
+
+
+
+```
+
+```{r KNN}
+#install package class
+library("class")
+
+head(cd, 20)
+table(cd$cardio)
+
+#random number generation
+set.seed(9850)
+gp <- runif(nrow(cd))
+cd <- cd[order(gp),]
+
+
+head(cd)
+
+str(cd)
+
+#normalizing the numerical features so that none of the features have undue influence on the prediction of our classes
+
+normalize <- function(x) {
+  + return ( (x- min(x)) / (max(x) - min(x)))}
+
+
+cd_n <- as.data.frame(lapply(cd[,c(1,3,4,5,6,13)], normalize))
+
+str(cd_n)
+
+summary(cd_n)
+
+#train test split
+
+require(caTools) #install caTools
+set.seed(123)
+sample = sample.split(cd,SplitRatio = 0.70)
+train_cd =subset(cd,sample ==TRUE)
+test_cd =subset(cd, sample==FALSE)
+
+train_cd_target <- train_cd[,12]
+test_cd_target <- test_cd[,12]
+
+k= sqrt(nrow(cd))
+k   #265 , k is the number of neighbours and is computed by taking the suared root of the total number of observations. Preferably should be an odd number beacuse in default mode KNN takes majority vote and in case of a tie its good to have an odd number
+
+m1 <- knn(train = train_cd, test = test_cd, cl=train_cd_target , k=265)
+
+m1
+
+
+#confusion matrix
+
+table(test_cd_target, m1)
+
+acc <- 100 * sum(test_cd_target == m1)/ NROW(test_cd_target)
+
+acc
+
+#install package caret
+library(caret)
+
+confusionMatrix(table(m1,test_cd_target))
+
+#to improve the performance of the model we can use this loop, which will give the best value of k
+
+i=1
+k.optm=1
+for (i in 1:265){
+  
+  knn.mod <- knn(train = train_cd, test=test_cd, cl=train_cd_target, k=i)
+  
+  k.optm[i] <- 100* sum(test_cd_target == knn.mod)/NROW(test_cd_target)
+  
+  k=i
+  
+  cat(k,'=', k.optm[i], '\n')
+  
+}
+ 
+plot(k.optm, type="b", xlab="k-value", ylab="accuracy level")
+
+
+```
+```{r }
+m2 <- knn(train = train_cd, test = test_cd, cl=train_cd_target , k=10)
+
+table(test_cd_target, m2)
+
+acc2 <- 100 * sum(test_cd_target == m2)/ NROW(test_cd_target)
+
+acc2
+
+```
+### VISUALISATION
+```{r}
+library(ggplot2)
+
+#age count , affected vs not affected
+counts <- table(cd$cardio, cd$age)
+barplot(counts, main="Age distribution",
+  xlab="Age", ylab="Counts", col=c("darkblue","red"),
+  legend = rownames(counts), beside=TRUE)
+
+```
+We see that most people who are suffering are of the age 56, followed by 58.
+Majorly, people belonging to the age group 50+ are suffering from the disease.
+
+
+```{r}
+library("ggplot2")
+
+ 
+cd$gender<-as.factor(cd$gender)
+
+cd$cardio<-as.factor(cd$cardio)
+
+
+ggplot(data=cd, aes(x=gender, y=age, fill=cardio)) +
+  geom_bar(stat="identity")
+
+```
+
+
+```{r}
+
+
+install.packages("corrplot")
+source("http://www.sthda.com/upload/rquery_cormat.r")
+
+
+rquery.cormat(cd_n)
+
+
+
+```
+
+```{r}
+
+
+#plot(cd$age,cd$ap_hi, main="Scatterplot Example",
+ #  xlab="Car Weight ", ylab="Miles Per Gallon ")
+
+library(car)
+scatterplot(cd$ap_hi ~ cd$age, data=cd,
+   xlab="Age", ylab="Systolic Blood pressure",
+   main="Relationship of age and systolic blood pressure",
+   )
+
+
+mytable <- table(cd$cholesterol )
+lbls <- paste(names(mytable), "\n", mytable, sep="")
+pie(mytable, labels = lbls,
+   main="Pie Chart of Cholestrol levels)")
+```
